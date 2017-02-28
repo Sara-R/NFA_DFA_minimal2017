@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html ng-app="minimal">
+<head>
+<title>Automata's treatement</title>
+<meta name="description" content="Interactive diagram implemented by GoJS using AngularJS, including a diagram directive and model binding." />
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
+  <link rel="shortcut icon" href="qf.ico">
+<link href="https://fonts.googleapis.com/css?family=Lobster|Pacifico|Rochester|PT+Sans" rel="stylesheet"><meta charset="UTF-8">
+<script src="go.js"></script>
+<script src="viz.js"></script>
+
+<script src="jquery.js"></script>
+<!-- <link href="../assets/css/goSamples.css" rel="stylesheet" type="text/css" />  <!-- you don't need to use this --> 
+<!--<script src="goSamples.js"></script> --> <!-- this is only for the GoJS Samples framework -->
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-animate.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-aria.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-messages.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/angular-material-icons/0.7.1/angular-material-icons.min.js"></script> 
+
+  <script type="text/javascript" src="minimize.js"></script>
+
+
+  <!-- Angular Material Library -->
+  <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js"></script>
+  <style type="text/css">
+#descrip{
+  font-family: 'Lobster', cursive;
+  display: block;
+
+
+}
+  #showTheStuff{
+   font-family: 'Pacifico', cursive;
+    padding: 10px 10px 10px 10px;
+    margin: 5px;
+     display: inline-block;
+     vertical-align: top;
+     min-height: 100px;
+overflow: hidden;
+   }
+#textbla{
+      padding: 10px 10px 10px 20px;
+font-family: 'Lobster', cursive;
+
+
+}
+#thebuttons{
+  display: inline-block;
+}
+#thebuttons .md-button{
+    font-family: 'PT Sans', sans-serif;
+    background-color: #2196F3
+;
+
+}
+#final_auto{
+  padding: 10px 5px 5px 5px;
+  font-family: 'Lobster', cursive;
+
+
+}
+  #themodel{
+        margin: 5px;
+        margin-left: 10px;
+     display: inline-block;
+     vertical-align: top;
+  }
+  .radioButtondemoBasicUsage body {
+  padding: 20px; }
+
+.radioButtondemoBasicUsage hr {
+  margin-left: -20px;
+  opacity: 0.3; }
+
+.radioButtondemoBasicUsage md-radio-group {
+  width: 150px; }
+
+.radioButtondemoBasicUsage p:last-child {
+  padding-bottom: 50px; }
+
+.radioButtondemoBasicUsage [ng-controller] {
+  padding: 0 20px; }
+
+.radioButtondemoBasicUsage .radioValue {
+  margin-left: 5px;
+  color: #0f9d58;
+  font-weight: bold;
+  padding: 5px; }
+
+
+.radioButtondemoBasicUsage md-icon {
+  margin: 0 20px 20px;
+  width: 128px;
+  height: 128px; }
+
+.radioButtondemoBasicUsage .ipsum {
+  color: saddlebrown;
+  font-size: 0.9em; }</style>
+<script id="code">
+
+  angular.module('minimal', ['ngMaterial','ngMessages', 'ngMdIcons'])
+    .directive('goDiagram', function() {
+      return {
+        restrict: 'E',
+        template: '<div></div>',  // just an empty DIV element
+        replace: true,
+        scope: { model: '=goModel' },
+         
+        link: function(scope, element, attrs) {
+          var $ = go.GraphObject.make;
+          var diagram =  // create a Diagram for the given HTML DIV element
+            $(go.Diagram, element[0],
+              {  
+                nodeTemplate:  $(go.Node, "Auto", new go.Binding("deletable", "dNode"),
+                               { desiredSize: new go.Size(60, 60) }, 
+                                { locationSpot: go.Spot.Center },
+                                new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+                               
+                                 new go.Binding("opacity", "alpha"),
+                                $(go.Shape,  new go.Binding("figure", "shape"), new go.Binding("fill", "color"), 
+                                  {
+                                    portId: "a", cursor: "pointer",
+                                    fromLinkable: true, toLinkable: true,
+                                    fromLinkableSelfNode: true, toLinkableSelfNode: true,
+                                    fromLinkableDuplicates: true, toLinkableDuplicates: true
+                                  }),
+                                $(go.TextBlock, { margin: 3, editable: false },
+                                  new go.Binding("text", "name").makeTwoWay())
+
+                              ), 
+                linkTemplate:   $(go.Link,   new go.Binding("deletable", "dLink"),// the whole link panel
+        {
+          curve: go.Link.Bezier, adjusting: go.Link.Stretch,
+          reshapable: true, relinkableFrom: true, relinkableTo: true,  
+          toShortLength: 3
+        },
+        
+        new go.Binding("points").makeTwoWay(),
+        new go.Binding("curviness"),
+        $(go.Shape,  // the link shape
+          { strokeWidth: 1.5 }),
+        $(go.Shape,  // the arrowhead
+          { toArrow: "standard", stroke: null }),
+        $(go.Panel, "Auto",
+
+          $(go.TextBlock, "",  // the label text
+            {          
+              textAlign: "start",
+              font: "9pt helvetica, arial, sans-serif",
+              margin: 4,
+              editable: false  // enable in-place editing
+            },
+            // editing the text automatically updates the model data
+            new go.Binding("text").makeTwoWay())
+        )
+
+      ),
+                initialContentAlignment: go.Spot.Center,
+                "ModelChanged": updateAngular,
+                "ChangedSelection": updateSelection,
+                "undoManager.isEnabled": true
+              });
+
+var nbre_etats=2;
+ var EtatsFinal=[];
+
+          // whenever a GoJS transaction has finished modifying the model, update all Angular bindings
+          function updateAngular(e) {
+            if (e.isTransactionFinished) {
+              scope.$apply();
+
+            }
+          }
+
+          // update the Angular model when the Diagram.selection changes
+          function updateSelection(e) {
+            diagram.model.selectedNodeData = null;
+            var it = diagram.selection.iterator;
+            while (it.next()) {
+              var selnode = it.value;
+              // ignore a selected link or a deleted node
+              if (selnode instanceof go.Node && selnode.data !== null) {
+                diagram.model.selectedNodeData = selnode.data;
+                break;
+              }
+            }
+            scope.$apply();
+          }
+
+          // notice when the value of "model" changes: update the Diagram.model
+          scope.$watch("model", function(newmodel) {
+            var oldmodel = diagram.model;
+            if (oldmodel !== newmodel) {
+              diagram.removeDiagramListener("ChangedSelection", updateSelection);
+              diagram.model = newmodel;
+              diagram.addDiagramListener("ChangedSelection", updateSelection);
+              
+
+            }
+          });
+
+          scope.$watch("model.selectedNodeData.name", function(newname) {
+            if (!diagram.model.selectedNodeData) return;
+            // disable recursive updates
+            diagram.removeModelChangedListener(updateAngular);
+            // change the name
+            diagram.startTransaction("change name");
+            // the data property has already been modified, so setDataProperty would have no effect
+            var node = diagram.findNodeForData(diagram.model.selectedNodeData);
+            if (node !== null) node.updateTargetBindings("name");
+            diagram.commitTransaction("change name");
+            // re-enable normal updates
+            diagram.addModelChangedListener(updateAngular);
+          });
+
+
+         diagram.addDiagramListener("LinkDrawn", function(e) {
+           
+
+      var link = e.subject;
+      scope.$parent.showAdvanced(null,e);
+      
+   
+    });
+
+          diagram.addDiagramListener("ObjectDoubleClicked",
+      function(e) {
+        var part = e.subject.part;
+        if ((part instanceof go.Link)) { 
+      scope.$parent.showAdvancedChange(null,part); }
+      });
+
+scope.$on('normalEtat', function () {
+
+  var node={ key: nbre_etats, name: ("q"+nbre_etats), shape: "Circle", color: "white" };
+         
+  
+                    diagram.model.addNodeData(node);
+                    nbre_etats++;
+                });
+          
+
+scope.$on('EtatFinal', function () {
+  var node={ key: nbre_etats, name: ("q"+nbre_etats), shape: "ring", color: "white" };
+
+  
+                    diagram.model.addNodeData(node);
+                    nbre_etats++;
+                   
+                    
+                });
+
+scope.$on('ShowLinks', function () {
+  var myEl = angular.element( document.querySelector( '#thelinkslist' ) );
+  myEl.empty();
+  myEl.append("The list of links:"+"</br>")
+          for (var i = 1; i < diagram.model.linkDataArray.length; i++) {
+
+             
+myEl.append( "Link from: q"+diagram.model.linkDataArray[i].from+" to q"+diagram.model.linkDataArray[i].to+" with label:"+diagram.model.linkDataArray[i].text+"</br>");
+
+              };
+         
+
+                    
+                });
+
+scope.$on('MakeAlink', function(event, args) {
+  var link=args.b.subject;
+  if(args.a=="Cancel")
+ 
+diagram.model.removeLinkData(link.data);
+else
+      diagram.model.setDataProperty(link.data, "text", args.a);
+         
+
+                    
+                });
+
+scope.$on('ModifyAlink', function(event, args) {
+  var link=args.b;
+  if(args.a!="Cancel")
+  {
+ 
+      diagram.model.setDataProperty(link.data, "text", args.a);
+         
+}
+                    
+                });
+
+  diagram.addDiagramListener("SelectionDeleted", function(e){
+e.subject.each(function(node) {
+      var model = e.diagram.model;
+      
+      for (var i = node.data.key; i < nbre_etats; i++) {
+          
+          var data = diagram.model.findNodeDataForKey(i+1);
+    // This will update the color of the "Delta" Node
+    if (data !== null) { diagram.model.setDataProperty(data, "key", i); diagram.model.setDataProperty(data, "name", ("q"+i));
+          }
+    };
+  });
+nbre_etats--;
+  
+});
+
+  function showFinalEtats () {
+     
+      var k=0;
+           for (var i = 0; i < diagram.model.nodeDataArray.length; i++) {
+
+
+             
+                if(diagram.model.nodeDataArray[i].shape=="ring")
+                {
+                  EtatsFinal.push(""+diagram.model.nodeDataArray[i].key+"");
+
+                }
+
+              };  
+
+
+
+  }
+
+ 
+
+
+
+  scope.$on('Determine', function(event, args){
+
+    showFinalEtats();
+    var myEl = angular.element( document.querySelector( '#messagerreur' ) );
+  myEl.empty();
+    if(EtatsFinal.length!=0)
+    {
+
+    var nbre_etats=diagram.model.nodeDataArray.length;
+  MultiArray = new Array(nbre_etats);
+ 
+  Keys= new Array();
+  var k=0;
+     for (var i = 1; i < diagram.model.linkDataArray.length; i++) {
+    if(Keys.indexOf(diagram.model.linkDataArray[i].text) == -1 && diagram.model.linkDataArray[i].text!="ε" ) {
+              Keys[k]=diagram.model.linkDataArray[i].text;
+              k++;
+            }
+          };
+
+   for (var i = 0; i < (diagram.model.nodeDataArray.length-1); i++) {
+    MultiArray [i] = new Array(Keys.length+2).join(".").split(".");
+    MultiArray [i][0] = (i+1).toString();
+    MultiArray [i][(Keys.length)+1] = (i+1).toString()+",";
+    var node=diagram.model.nodeDataArray[i+1];
+    for (var j = 1; j < diagram.model.linkDataArray.length; j++) {
+      if(diagram.model.linkDataArray[j].from == (i+1))
+      { var indexKey=Keys.indexOf(diagram.model.linkDataArray[j].text);
+        if(indexKey!=-1)
+        {
+          MultiArray [i][indexKey+1] += (diagram.model.linkDataArray[j].to).toString()+",";
+        }else{
+          MultiArray [i][(Keys.length)+1] += (diagram.model.linkDataArray[j].to).toString()+",";
+        }
+      }
+    };
+for (var k = 1; k < MultiArray[i].length; k++) {
+  if(MultiArray[i][k].charAt(MultiArray[i][k].length-1)==",")
+  { 
+    MultiArray[i][k]=MultiArray[i][k].substring(0, MultiArray[i][k].length - 1);
+  }
+};
+
+  }
+  
+
+  table_traitement=determine_algo(MultiArray, Keys.length);
+  var demand_mini=args.avecMin;
+  
+  if(demand_mini)
+  {
+              table_traitement_with_mini= minimize(table_traitement,EtatsFinal);
+             
+              table_traitement=table_traitement_with_mini;
+
+  }
+
+showFinal(table_traitement, Keys);
+}else{
+  var myEl = angular.element( document.querySelector( '#messagerreur' ) );
+  myEl.empty();
+   myEl.append("You must have at least one accepting stat!"+"</br>");
+
+}
+  });
+
+Array.prototype.getDuplicates = function () {
+    var duplicates = {};
+        var nonDuplicates = {};
+    for (var i = 0; i < this.length; i++) {
+        if(duplicates.hasOwnProperty(this[i])) {
+            duplicates[this[i]].push(i);
+        } else if (this.lastIndexOf(this[i]) !== i) {
+            duplicates[this[i]] = [i];
+        }else{
+          nonDuplicates[this[i]]=[i];
+        }
+    }
+
+    return duplicates;
+};
+
+Array.prototype.nongetDuplicates = function () {
+    var duplicates = {};
+        var nonDuplicates = {};
+    for (var i = 0; i < this.length; i++) {
+        if(duplicates.hasOwnProperty(this[i])) {
+            duplicates[this[i]].push(i);
+        } else if (this.lastIndexOf(this[i]) !== i) {
+            duplicates[this[i]] = [i];
+        }else{
+          nonDuplicates[this[i]]=[i];
+        }
+    }
+
+    return nonDuplicates;
+};
+
+function showFinal (table_traitement, Keys) {
+  var table_dra=new Array();
+
+for (var i = 0; i < table_traitement.length; i++) {
+  var inside_tab= new Object();
+ 
+ inside_tab['from']=table_traitement[i][0];
+var tab=table_traitement[i].slice(1);
+   tab=tab.nongetDuplicates(); 
+      for (var key in tab) {
+  if (tab.hasOwnProperty(key)) {
+    if(key!='-') {
+    var the_val='';
+   for (var k = 0; k < tab[key].length; k++) {
+     the_val+=Keys[tab[key][k]]+',';
+   };
+   if(the_val.charAt(the_val.length-1)==",")
+   the_val=the_val.substring(0, the_val.length - 1)
+  inside_tab[key]=the_val;
+ }
+  }
+}
+   var tab1=table_traitement[i].slice(1);
+   tab1=tab1.getDuplicates();
+    for (var key in tab1) {
+  if (tab1.hasOwnProperty(key)) {
+     if(key!='-') {
+    var the_val='';
+   for (var k = 0; k < tab1[key].length; k++) {
+     the_val+=Keys[tab1[key][k]]+',';
+   };
+   if(the_val.charAt(the_val.length-1)==",")
+   the_val=the_val.substring(0, the_val.length - 1)
+   inside_tab[key]=the_val;
+ }
+  }
+}
+
+table_dra[i]=inside_tab;
+  
+};
+
+var tabToaddFinal=[];
+  var DOTSCRIPTHEADER = 'digraph finite_state_machine {\n' + '  rankdir = LR;\n';
+var DOTSCRIPTEND = '}\n';
+var transitionDotScript = '  node [shape = circle];\n';
+
+for (var i = 0; i < table_dra.length; i++) {
+  var the_key_from='"'+'q'+table_dra[i].from+'"';
+  for (var inside in table_dra[i]) {
+    if(inside!="from") {
+    
+
+       
+    var the_key_to='"'+'q'+inside+'"';
+    var index;
+    var increm=0;
+   
+
+
+    for (var s= 0; s < EtatsFinal.length; s++) {
+      index=inside.indexOf(EtatsFinal[s]);
+      
+      if(index!=-1)
+       { if( tabToaddFinal.indexOf(inside)==-1)
+        { tabToaddFinal.push(inside);
+          }
+        
+      }
+
+    };
+   
+    
+    
+    transitionDotScript += '  ' + the_key_from+ '->' + the_key_to + ' [label="' +
+        table_dra[i][inside] + '"];\n';
+      }
+}
+};
+ 
+  
+   
+  var initialStatesDotScript = '';
+  var initialStatesStartDotScript = '  node [shape = plaintext];\n';
+  var acceptStatesDotScript = '';
+      
+      for (var s = 0; s < tabToaddFinal.length; s++) {
+              acceptStatesDotScript += '  node [shape = doublecircle]; ' +'"'+'q'+tabToaddFinal[s] +'"'+ ';\n';
+
+      };
+       acceptStatesDotScript += '  node [shape = circle]; ' +'q'+ 1 + ';\n';
+    
+   
+      initialStatesStartDotScript += '  "" -> ' + 'q'+1 + ' [label = "start"];\n';
+      // accept is higher priority than initial state.
+     // initialStatesDotScript += '  node [shape = circle]; ' + 'q'+1 + ';\n';
+      
+    
+  
+  var hell= DOTSCRIPTHEADER + initialStatesDotScript + acceptStatesDotScript +
+      initialStatesStartDotScript + transitionDotScript + DOTSCRIPTEND;
+
+
+
+
+// render dot script to svg.
+var result = Viz(hell, 'svg', 'dot');
+
+scope.$parent.DrawViz(result);
+
+}
+
+
+function determine_algo (MultiArray, nbre_alphabets) {
+  // body...
+
+  var finished=false;
+var table_traitement=[];
+var iteration=0;
+var table_des_etats=[];
+var table_des_etats_parcoures=[];
+var s=1;
+while(!finished)
+{
+    if(iteration==0){
+        table_traitement[iteration]=new Array(nbre_alphabets+1);
+        table_traitement[iteration][0]=MultiArray[0][0];
+        table_des_etats.push(table_traitement[iteration][0]);
+        table_des_etats_parcoures.push(MultiArray[0][0]);
+        /*alert("etas a 0"+table_des_etats);
+        alert("etats parcoure"+table_des_etats_parcoures);*/
+         var array_ouside = [];
+            array_outside= JSON.parse("[" + table_traitement[iteration][0] + "]");
+        for (var j = 1; j <= nbre_alphabets ; j++) {
+            table_traitement[iteration][j]="";
+          
+          for (var outside = 0; outside < array_outside.length; outside++) {
+
+            var array = [];
+            array= JSON.parse("[" + MultiArray[array_outside[outside]-1][j] + "]");
+
+     
+                  for (var k = 0; k < array.length; k++) {
+
+                     if(array[k]!="")
+                        { 
+           
+                                 if(table_traitement[iteration][j]=="")
+                                    {
+                                        
+                                            table_traitement[iteration][j]=
+                                                 MultiArray[array_outside[outside]-1][j];
+                                                    
+                                                  if(MultiArray[array[k]-1][nbre_alphabets+1]!="-")
+                                                  {
+                                                       table_traitement[iteration][j]=table_traitement[iteration][j]+","+MultiArray[array[k]-1][nbre_alphabets+1];
+                                                       
+                                                   }
+                                    }else{
+                                        table_traitement[iteration][j]=table_traitement[iteration][j]+","+
+                                                 MultiArray[array_outside[outside]-1][j];
+                                                    
+                                                  if(MultiArray[array[k]-1][nbre_alphabets+1]!="-")
+                                                       table_traitement[iteration][j]= table_traitement[iteration][j]+","+MultiArray[array[k]-1][nbre_alphabets+1];
+
+                                    }
+                           
+                              
+                         }
+                     // alert(table_traitement[iteration][j]);
+                          }
+                        
+            
+                  };
+                 
+            //   alert(table_traitement[iteration])
+
+                  if(table_traitement[iteration][j]!="")
+                  {
+                          var arr=[]; 
+                                arr=JSON.parse("[" + table_traitement[iteration][j] + "]");
+
+
+                                  arr = arr.filter( function( item, index, inputArray ) {
+                                    return inputArray.indexOf(item) == index;
+                                });
+                                var string_to_put="";
+                               for (var d = 0; d < arr.length; d++) {
+                                if(d!=(arr.length-1))
+                                                   string_to_put+=arr[d]+",";
+                                                 else
+                                                   string_to_put+=arr[d];
+                                                 };                  
+                            table_traitement[iteration][j]=string_to_put;
+                          }else{
+                            table_traitement[iteration][j]="-";
+                          }
+             //alert(table_traitement[iteration][j]);
+        };
+        /*alert(table_traitement[0][0]);
+        alert(table_traitement[0][1]);
+        alert(table_traitement[0][2]);
+        alert(table_traitement[0][3]);
+       */
+      // alert(table_traitement[iteration][1]);
+      
+ // alert(table_traitement[0].length);
+        for (var t = 1; t < table_traitement[iteration].length; t++) {
+
+               
+                  if(table_traitement[iteration][t]!="-")
+                  {
+                      if(!table_des_etats.includes(table_traitement[iteration][t]))
+                      { 
+                        
+                        table_des_etats.push(table_traitement[iteration][t]);
+                         table_traitement[s]=new Array(nbre_alphabets+1);
+                          table_traitement[s][0]=table_traitement[iteration][t];
+                            s=s+1;
+                      }
+                }
+              };
+             
+
+       
+       
+        }else{
+          table_des_etats_parcoures.push(table_traitement[iteration][0]);
+                var array_ouside = [];
+            array_outside= JSON.parse("[" + table_traitement[iteration][0] + "]");
+       
+            for (var j = 1; j <= nbre_alphabets ; j++) {
+                 table_traitement[iteration][j]="";
+          
+            for (var outside = 0; outside < array_outside.length; outside++) {
+            var array = [];
+            
+            array= JSON.parse("[" + MultiArray[array_outside[outside]-1][j] + "]");
+              
+                  for (var k = 0; k < array.length; k++) {
+
+                     if(array[k]!="")
+                        { 
+           
+                                 if(table_traitement[iteration][j]=="")
+                                    {
+                                        
+                                            table_traitement[iteration][j]=
+                                                 MultiArray[array_outside[outside]-1][j];
+                                                    
+                                                  if(MultiArray[array[k]-1][nbre_alphabets+1]!="-")
+                                                  {
+                                                       table_traitement[iteration][j]=table_traitement[iteration][j]+","+MultiArray[array[k]-1][nbre_alphabets+1];
+                                                       
+                                                   }
+                                    }else{
+                                        table_traitement[iteration][j]=table_traitement[iteration][j]+","+
+                                                 MultiArray[array_outside[outside]-1][j];
+                                                    
+                                                  if(MultiArray[array[k]-1][nbre_alphabets+1]!="-")
+                                                       table_traitement[iteration][j]= table_traitement[iteration][j]+","+MultiArray[array[k]-1][nbre_alphabets+1];
+
+                                    }
+                           
+                              
+                         }
+                     // alert(table_traitement[iteration][j]);
+                          };
+                        
+            
+                  };
+                  //supprimer les redoublants
+                  if(table_traitement[iteration][j]!="")
+                  {
+                          var arr=[];
+                                arr=JSON.parse("[" + table_traitement[iteration][j] + "]");
+
+
+                                  arr = arr.filter( function( item, index, inputArray ) {
+                                    return inputArray.indexOf(item) == index;
+                                });
+                                var string_to_put="";
+                               for (var d = 0; d < arr.length; d++) {
+                                if(d!=(arr.length-1))
+                                                   string_to_put+=arr[d]+",";
+                                                 else
+                                                   string_to_put+=arr[d];
+                                                 };                  
+                            table_traitement[iteration][j]=string_to_put;
+                          }else{
+                            table_traitement[iteration][j]="-";
+                          }
+
+
+              //test si on a des nouvelles valeurs(nouveau etat exist déja)
+
+         };
+        
+        /* alert(table_traitement[iteration][1]);
+         alert(table_traitement[iteration][2]);
+         alert(table_traitement[iteration][3]);*/
+        
+
+              for (var t = 1; t < table_traitement[iteration].length; t++) {
+
+               
+                  if(table_traitement[iteration][t]!="-")
+                  {
+                      if(!table_des_etats.includes(table_traitement[iteration][t]))
+                      { 
+                        
+                        table_des_etats.push(table_traitement[iteration][t]);
+                         table_traitement[s]=new Array(nbre_alphabets+1);
+                          table_traitement[s][0]=table_traitement[iteration][t];
+                            s=s+1;
+                      }
+                }
+              };
+              
+             
+           
+
+    }
+    iteration++;
+    if(table_des_etats_parcoures.length== table_des_etats.length)
+    {
+        finished=true;
+    }
+
+
+        }
+   
+
+
+   for (var i = 0; i < table_traitement.length; i++) {
+     for (var j = 0; j < table_traitement[i].length; j++) {
+          if(table_traitement[i][j]!="-")
+         {  var res = table_traitement[i][j].split(',').map(function(item) {
+                                                return parseInt(item, 10);
+                                                     });
+           res.sort();
+           var sting=res.join(",");
+           table_traitement[i][j]=sting;
+          }
+     };
+   };
+   
+  var outterArray = [];
+var existNodes=[];
+for (var i = 0; i < table_traitement.length; i++) {
+  if(existNodes.indexOf(table_traitement[i][0])==-1)
+   {  existNodes.push(table_traitement[i][0]);
+      outterArray.push(table_traitement[i]);
+    }
+
+};
+
+
+        return outterArray;
+}
+
+
+   /*
+if (e.diagram.selection.count == 1) {
+    var nodeToDelete = e.diagram.selection.iterator.first();
+   for (var i = nodeToDelete.data.key; i < nbre_etats; i++) {
+          
+          var data = diagram.model.findNodeDataForKey(i+1);
+    // This will update the color of the "Delta" Node
+    if (data !== null) { diagram.model.setDataProperty(data, "key", i); diagram.model.setDataProperty(data, "name", ("q"+i));
+          }
+        }*/   
+
+          
+/*var selectText = elem.findObject("TEXT"); // Name of the TextBlock.
+var selectShape = elem.findObject("SHAPE"); // Name of the Shape.
+diagram.remove(selectShape.part);*/
+
+
+
+
+
+
+        }
+      };
+    })
+    .controller('MinimalCtrl', function($scope, $mdDialog) {
+      $scope.customFullscreen = false;
+      $scope.model=[];
+
+    $scope.model = new go.GraphLinksModel(
+         [ 
+         { key: 0, dNode: false, name: "q0", alpha: 0.0 ,shape: "LineH", color: "white" },
+          { key: 1, dNode: false, name: "q1", shape: "Circle", color: "white" },
+          
+        ],
+        [
+         { from: 0, to: 1, text: "Start", dLink:false}
+        ]);
+  
+
+
+      
+
+
+
+      $scope.model.selectedNodeData = null;
+
+      $scope.replaceModel = function() {
+          $scope.customFullscreen = false;
+      $scope.model=[];
+      $scope.nbre_etats=2;
+ var myEl = angular.element( document.querySelector( '#thelinkslist' ) );
+  myEl.empty();
+   var myEl = angular.element( document.querySelector( '#thealphabetslist' ) );
+  myEl.empty();
+var myEl = angular.element( document.querySelector( '#final_auto' ) );
+  myEl.empty();
+    $scope.model = new go.GraphLinksModel(
+         [ 
+         { key: 0, dNode: false, name: "q0", alpha: 0.0 ,shape: "LineH", color: "white" },
+          { key: 1, dNode: false, name: "q1", shape: "Circle", color: "white" },
+          
+        ],
+        [
+         { from: 0, to: 1, text: "Start", dLink:false}
+        ]);
+  
+
+
+      
+
+
+
+      $scope.model.selectedNodeData = null;
+      }
+
+
+      $scope.showStuff=function  () {
+        // body...
+        /* for (var i = 0; i < $scope.model.nodeDataArray.length; i++) {
+
+
+              alert("Node Key:"+$scope.model.nodeDataArray[i].key+" node name: "+$scope.model.nodeDataArray[i].name+" label:"+$scope.model.nodeDataArray[i].shape);
+
+              };*/
+              var Keys=[];
+              var k=0;
+               var myEl = angular.element( document.querySelector( '#thealphabetslist' ) );
+            myEl.empty();
+            myEl.append("The list of alphabets:"+"</br>")
+            var result="";
+
+                for (var i = 1; i < $scope.model.linkDataArray.length; i++) {
+    if(Keys.indexOf($scope.model.linkDataArray[i].text) == -1 && $scope.model.linkDataArray[i].text!="ε" ) {
+              Keys[k]=$scope.model.linkDataArray[i].text;
+             result+=$scope.model.linkDataArray[i].text+',';
+              k++;
+            }
+          };
+          result = result.substring(0, result.length - 1);
+          myEl.append(result)
+      }
+
+      $scope.addNormalEtat= function() {
+    
+            $scope.$broadcast('normalEtat');
+        
+    
+  }
+
+  $scope.addEtatFinal= function() {
+   
+            $scope.$broadcast('EtatFinal');
+  }
+
+  $scope.ShowListLinks= function(){
+    $scope.$broadcast('ShowLinks');
+
+  }
+$scope.Determine= function(){
+  
+
+  $scope.$broadcast('Determine',{ avecMin: false });
+
+ 
+
+
+
+}
+$scope.Minimization= function(){
+  
+
+  $scope.$broadcast('Determine',{ avecMin: true });
+
+ 
+
+
+
+}
+
+ $scope.DrawViz = function(result) {
+  var myEl = angular.element( document.querySelector( '#final_auto' ) );
+  myEl.empty();
+  myEl.append("The result of the requested operation:"+"</br>");
+myEl.append(result);    
+
+ }
+
+  $scope.showAdvanced = function(ev, s) {
+    
+    $mdDialog.show({
+      controller: DialogController,
+      templateUrl: 'dialog1.tmpl.html',
+      parent: angular.element(document.body),
+      targetEvent: ev,
+      clickOutsideToClose:true,
+      fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
+    })
+    .then(function(answer) {
+      $scope.status = 'You said the information was "' + answer + '".';
+       $scope.$broadcast('MakeAlink',{ a: answer, b: s });
+    }, function() {
+      $scope.status = 'You cancelled the dialog.';
+      $scope.$broadcast('MakeAlink',{ a: "Cancel", b: s });
+    });
+  };
+
+
+ $scope.showAdvancedChange = function(ev, s) {
+    
+    $mdDialog.show({
+      controller: DialogController,
+      templateUrl: 'dialog1.tmpl.html',
+      parent: angular.element(document.body),
+      targetEvent: ev,
+      clickOutsideToClose:true,
+      fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
+    })
+    .then(function(answer) {
+      $scope.status = 'You said the information was "' + answer + '".';
+       $scope.$broadcast('ModifyAlink',{ a: answer, b: s });
+    }, function() {
+      $scope.status = 'You cancelled the dialog.';
+      $scope.$broadcast('ModifyAlink',{ a: "Cancel", b: s });
+    });
+  };
+
+  function DialogController($scope, $mdDialog) {
+  $scope.alphabet="";
+
+    $scope.hide = function() {
+      $mdDialog.hide();
+    };
+
+    $scope.cancel = function() {
+      $mdDialog.cancel();
+    };
+     $scope.submit = function(myForm) {
+      if($scope.sh=="Alphabet")
+      {
+      if($scope.alphabet.length>0)
+      { 
+       $scope.answer($scope.alphabet);}
+     }else{
+      $scope.answer("ε");
+
+     }
+   /*alert($scope.sh);
+   
+
+   if($scope.alphabet.length<1)
+   {
+    $scope.myvalue=true;
+   }*/
+   
+   
+  };
+
+    $scope.answer = function(answer) {
+
+      $mdDialog.hide(answer);
+    };
+  }
+
+    });
+</script>
+</head>
+<body ng-controller="MinimalCtrl"
+      onload="if (window.goSamples) goSamples()">
+      <div id="descrip">Made by: <b>Yousra Mouho</b> - <b>Sara Rachid </b>- <b>Ayoub Ouissaden</b>. Under the supervision of Mr <b>youssef Baddi</b>.</div>
+        <!-- only needed for the goSamples framework -->
+<div id="sample">
+  <!-- a go-diagram element referring to the model, originally written as: -->
+  <!-- &lt;go-diagram go-model="model" style="border: solid 1px blue; width:100%; height:400px"&gt;&lt;/go-diagram&gt; -->
+  <div id="themodel"><go-diagram go-model="model" style="border: solid 1px blue; width:600px; height:400px"></go-diagram></div>
+    <div id="showTheStuff"  style="border: solid 1px blue">Number of node data: {{model.nodeDataArray.length -1}}
+  <br>
+  Selected node: {{model.selectedNodeData.key}}  <input  ng-model="model.selectedNodeData.name"></input>
+  <br />
+  Number of link data: {{model.linkDataArray.length-1}}
+</br>
+<div id="thealphabetslist"></div>
+<div id="thelinkslist"></div>
+<div id="messagerreur"> </div>
+
+  
+</br>
+
+<div id="thebuttons">
+<md-button class="md-primary md-raised" ng-click="addNormalEtat()" >
+     Add normal state
+    </md-button>
+  <md-button class="md-primary md-raised" ng-click="addEtatFinal()">Add accepting state</md-button></br>
+   <md-button class="md-primary md-raised" ng-click="ShowListLinks()">Show list of links</md-button>
+   <md-button class="md-primary md-raised" ng-click="showStuff()" >
+      Show list of alphabets
+    </md-button></br>
+     <md-button class="md-primary md-raised" ng-click="replaceModel()">Replace Model</md-button>
+  <md-button class="md-primary md-raised" ng-click="Determine()">Determine</md-button>
+   <md-button class="md-primary md-raised" ng-click="Minimization()">Minimize</md-button>
+</br></div></div>
+<div id="final_auto" ></div>
+<div id="textbla">
+<p>Before you start, read carefully!</p>
+  
+  <b>Hello and welcome!</b>
+  <p> To get started please add nodes, by pressing on the corresponding buttons(<b>Add normal state</b>, <b>Add accepting state</b>).</p> 
+  <p>To link between two nodes ("Alpha" and "Beta") or a node and it-self, click anywhere on the "Alpha" node and simply drag the link to the "Beta" node to connect,
+   a prompt will then appear, you can then type the alphabet that identifies this link, or you may choose to create a link of <b>"ε" </b>weight, or simply cancel the operation.</p><p> Please note that the string you type 
+   is considered as one alphabet only.</p>
+   <p> if you wish to have different alphabet for the same transition, create multiple links. Also note that <b>"ε"</b> value is only taken into consideration when choosing the appropriate radio button. You can modify any link by doubling clicking it. </p>
+ <p>If you'd wish to delete a node, just click on it and press the keyboard button delete. Same process for a link.</p>
+ <p> You can check on model you created by typing either <b>show List of links</b> or <b>show List of alphabets</b>, the related description will appear in the second box.</p>
+ <p> You may also get informations about the current selected node, the total number of nodes. When ready, click on either the buttons <b>Determine</b>, <b>Minimize</b> to transform from nfa to dfa and dfa to minimal dfa respectively. </p>
+ <p>To get a better view of the created links, you may reposition them by cliking on the link and dragging the blue squares that appear.</p>
+  
+  <p>
+  You can also reset the current <a>Diagram.model</a> just by pressine <b>Replace Model</b>.
+  </p>
+</br></br><p></p></div>
+  
+</div>
+<script type="text/ng-template" id="dialog1.tmpl.html">
+  <md-dialog  aria-label="Alphabet choice">
+  <form name="myForm" ng-cloak ng-submit="submit(myForm)" novalidate>
+    <md-toolbar>
+      <div class="md-toolbar-tools" style="background-color:#2196F3">
+        <h2 bac>Alphabet choice</h2>
+        <span flex></span>
+        <md-button class="md-icon-button" ng-click="cancel()">
+   <ng-md-icon icon="close"  style="fill:white"  aria-label="close"></ng-md-icon> 
+        </md-button>
+      </div>
+    </md-toolbar>
+
+    <md-dialog-content>
+      <div class="md-dialog-content">
+        
+    <p>Selected Value: <span class="radioValue">{{ sh }}</span> </p>
+
+    <md-radio-group ng-model="sh" ng-init="sh = 'Alphabet'">
+
+      <md-radio-button value="Alphabet" class="md-primary">Alphabet</md-radio-button>
+      <md-input-container  ng-show="sh == 'Alphabet'" class="md-block" >
+             <label>Alphabet</label>
+            <input ng-model="alphabet" name="alphabetValue" required="sh = 'Alphabet'" >
+              <div ng-messages="myForm.alphabetValue.$error" role="alert">
+          <div ng-message="required">This is required.</div>
+        </div>
+          </md-input-container>
+           
+      <md-radio-button value="ε" > ε </md-radio-button>
+      
+    </md-radio-group>
+
+    
+ 
+      </div>
+    </md-dialog-content>
+
+    <md-dialog-actions layout="row">
+      
+      <md-button ng-click="answer('Cancel')">
+      Cancel
+      </md-button>
+      <md-button type="submit">
+        Submit
+      </md-button>
+    </md-dialog-actions>
+  </form>
+</md-dialog>
+</script>
+</body>
+</html>
