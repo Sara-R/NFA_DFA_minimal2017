@@ -5,7 +5,7 @@ to a DFA deterministic finite automaton) or determinize and minimize it (convert
 ![picture_project](https://cloud.githubusercontent.com/assets/17626295/23439275/e1ac5244-fe0d-11e6-9696-502be69bec5d.png)
 *Screenshot for the graphical interface*
 ![picture_project2](https://cloud.githubusercontent.com/assets/17626295/23439415/67d50348-fe0e-11e6-93f2-65470b50e34f.png)
-*Instructions to follow when using the inteerfac*
+*Instructions to follow when using the interface*
 ##Development Details
 The project was developed using GoJS and two technologies of the MeanJS stack: AngularJS and NodeJS. https://github.com/meanjs/mean
 The front-end uses a combination of AngularJS and functions of the FREE evaluation version of GoJS, a licensed Javascript library that makes 
