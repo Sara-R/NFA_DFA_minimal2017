@@ -8,7 +8,7 @@ to a DFA deterministic finite automaton) or determinize and minimize it (convert
 *Instructions to follow when using the interface*
 ##Development Details
 The project was developed using GoJS and two technologies of the MeanJS stack: AngularJS and NodeJS. https://github.com/meanjs/mean
-The front-end uses a combination of AngularJS and functions of the FREE evaluation version of GoJS, a licensed Javascript library that makes 
+The front-end uses a combination of AngularJS and functions of the **FREE** evaluation version of GoJS, a licensed Javascript library that makes 
 constructing JavaScript diagrams of complex nodes and links https://gojs.net/latest/index.html, and AngularJS.
 The files are managed using npm,a Javascript package manager.
 The back-end treatements are implemented using Javascript.
